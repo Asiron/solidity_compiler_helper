@@ -37,7 +37,9 @@ def process_code(contracts)
   return contracts
 end
 
-def javascript_file_name(file_name)
+def javascript_file_name(file_name, output)
+  return output unless output.nil?
+  
   extn = File.extname  file_name
   name = File.basename file_name, extn
   name + '_compiled.js'
@@ -69,6 +71,10 @@ OptionParser.new do |parser|
     options[:value] = value
   end
 
+  parser.on("-o", "--output FILENAME", String, "Path to the output result file") do |filename|
+    options[:output] = filename
+  end
+
 end.parse!
 
 raise OptionParser::MissingArgument if options[:gas].nil?
@@ -81,7 +87,9 @@ raise "Need to specify a file with contract's source code in Solidty " unless fi
 
 compiled_object = compile_solidity(file_name)
 compiled_object = process_code(compiled_object)
-javascript_file_name = javascript_file_name(file_name)
+javascript_file_name = javascript_file_name(file_name, options[:output])
+
+puts javascript_file_name
 
 current_contract = options[:contract]
 
@@ -89,7 +97,7 @@ compiled_variable_name = "#{current_contract}Compiled"
 contract_variable_name = "#{current_contract}Contract"
 contract_instance_variable_name = "#{current_contract}"
 
-gas  = options[:gas]
+gas   = options[:gas]
 value = options[:value]
 input = options[:args]
 
