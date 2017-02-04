@@ -37,12 +37,22 @@ def process_code(contracts)
   return contracts
 end
 
-def javascript_file_name(file_name, output)
-  return output unless output.nil?
-  
-  extn = File.extname  file_name
-  name = File.basename file_name, extn
-  name + '_compiled.js'
+def append_to_basename(file_name, suffix)
+  path = File.dirname file_name
+  ext  = File.extname file_name
+  basename = File.basename(file_name, ext)
+  File.join(path, basename + suffix)
+end
+
+def make_output_filename(file_name, output)
+  if not output.nil?
+    deploy_out = output
+    abi_out = append_to_basename(output, "_abi.js")
+  else
+    deploy_out = append_to_basename(file_name, "_deploy.js")
+    abi_out = append_to_basename(file_name, "_abi.js")
+  end
+  return deploy_out, abi_out
 end
 
 options = {}
@@ -87,11 +97,9 @@ raise "Need to specify a file with contract's source code in Solidty " unless fi
 
 compiled_object = compile_solidity(file_name)
 compiled_object = process_code(compiled_object)
-javascript_file_name = javascript_file_name(file_name, options[:output])
-
-puts javascript_file_name
-
 current_contract = options[:contract]
+
+deploy_out, abi_out = make_output_filename(file_name, options[:output])
 
 compiled_variable_name = "#{current_contract}Compiled"
 contract_variable_name = "#{current_contract}Contract"
@@ -101,7 +109,7 @@ gas   = options[:gas]
 value = options[:value]
 input = options[:args]
 
-File.open(javascript_file_name, 'w') do |f|
+File.open(deploy_out, 'w') do |f|
   f.write("#{library_code};\nvar #{compiled_variable_name} = #{compiled_object.to_json};")
   f.write("#{contract_variable_name} = create(#{compiled_variable_name}.#{current_contract}.abi);")
   f.write("#{contract_instance_variable_name} = deploy(eth.coinbase,#{value},#{gas},#{contract_variable_name},#{compiled_variable_name}.#{current_contract}.bin,#{input});")
@@ -110,4 +118,9 @@ File.open(javascript_file_name, 'w') do |f|
   f.write("console.log('Contract Instance : #{contract_instance_variable_name}');")
 end
 
-puts "loadScript('#{`pwd`}/#{javascript_file_name}')".gsub("\n",'')
+File.open(abi_out, 'w') do |f|
+  f.write("var #{compiled_variable_name} = #{compiled_object.to_json};")
+end
+
+puts "loadScript('#{`pwd`}/#{deploy_out}')".gsub("\n",'')
+puts "loadScript('#{`pwd`}/#{abi_out}')".gsub("\n",'')
