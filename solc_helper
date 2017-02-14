@@ -119,7 +119,7 @@ File.open(deploy_out, 'w') do |f|
 end
 
 File.open(abi_out, 'w') do |f|
-  f.write("var #{compiled_variable_name} = #{compiled_object.to_json};")
+  f.write("var #{compiled_variable_name} = exports.#{compiled_variable_name} = #{compiled_object.to_json};")
 end
 
 puts "loadScript('#{`pwd`}/#{deploy_out}')".gsub("\n",'')
