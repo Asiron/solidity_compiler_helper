@@ -24,17 +24,17 @@ def compile_solidity(file)
   end
 end
 
-def deploy_contract(code)
-end
+def process_code(compiled_object, name)
 
-def process_code(contracts)
-  contracts.keys.each.with_index do |key, i|
-    contracts[key]["bin"] = "0x" + contracts[key]["bin"]
-    contracts[key]["abi"] = JSON.parse(contracts[key]["abi"])
-    contracts[key]["devdoc"] = JSON.parse(contracts[key]["devdoc"])
-    contracts[key]["userdoc"] = JSON.parse(contracts[key]["userdoc"])
+  contract = {}
+  contract[name] = {}
+  compiled_object.select { |k,v| k.split(':',2).last == name }.map do |k,v|
+    contract[name]["bin"]     = "0x" + v["bin"]
+    contract[name]["abi"]     = JSON.parse(v["abi"])
+    contract[name]["devdoc"]  = JSON.parse(v["devdoc"])
+    contract[name]["userdoc"] = JSON.parse(v["userdoc"])
   end
-  return contracts
+  contract 
 end
 
 def append_to_basename(file_name, suffix)
@@ -95,9 +95,9 @@ options[:args] = options[:args] || "null"
 file_name = ARGV.pop
 raise "Need to specify a file with contract's source code in Solidty " unless file_name
 
-compiled_object = compile_solidity(file_name)
-compiled_object = process_code(compiled_object)
 current_contract = options[:contract]
+compiled_object = compile_solidity(file_name)
+compiled_object = process_code(compiled_object, current_contract)
 
 deploy_out, abi_out = make_output_filename(file_name, options[:output])
 
