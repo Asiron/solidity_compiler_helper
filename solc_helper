@@ -73,8 +73,8 @@ OptionParser.new do |parser|
     options[:gas] = gas
   end
 
-  parser.on("--args ARGS", "Arguments for contract construction if any") do |args|
-    options[:args] = args
+  parser.on("--args x,y,z", "Arguments for contract construction if any") do |list|
+    options[:args] = list
   end
 
   parser.on("-v", "--value VALUE", Integer, "Ether value for deployment") do |value|
